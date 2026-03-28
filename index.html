@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevWeb — Build Websites With AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#060609;
+  --s1:#0d0d12;
+  --s2:#12121a;
+  --s3:#1a1a24;
+  --a:#4f6fff;
+  --a2:#a78bfa;
+  --a3:#38bdf8;
+  --w:#ffffff;
+  --m:#52526e;
+  --m2:#2a2a3d;
+  --border:rgba(255,255,255,0.06);
+  --border2:rgba(79,111,255,0.2);
+  --r:14px;
+  --r2:24px;
+}
+
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--w);
+  font-family:'Geist',sans-serif;
+  overflow-x:hidden;
+  cursor:none;
+}
+
+/* CURSOR */
+#c1,#c2{position:fixed;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%)}
+#c1{width:5px;height:5px;background:#fff}
+#c2{width:28px;height:28px;border:1px solid rgba(79,111,255,0.4);transition:all 0.1s ease}
+
+/* CANVAS */
+#bg{position:fixed;inset:0;z-index:0;opacity:0.7}
+
+.z1{position:relative;z-index:1}
+
+/* NAV */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 40px;height:60px;
+  background:rgba(6,6,9,0.8);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+}
+.logo{
+  font-family:'Instrument Serif',serif;
+  font-size:1.4rem;
+  letter-spacing:-0.5px;
+  color:#fff;
+}
+.logo sup{
+  font-family:'Geist',sans-serif;
+  font-size:0.5rem;
+  letter-spacing:2px;
+  color:var(--a);
+  text-transform:uppercase;
+  vertical-align:super;
+  margin-left:4px;
+}
+.nav-center{display:flex;gap:32px}
+.nav-link{
+  font-size:0.82rem;color:var(--m);
+  text-decoration:none;letter-spacing:0.3px;
+  transition:color 0.2s;cursor:none;
+}
+.nav-link:hover{color:#fff}
+.nav-right{display:flex;align-items:center;gap:10px}
+.nav-btn{
+  padding:8px 18px;border-radius:8px;
+  font-family:'Geist',sans-serif;font-size:0.8rem;
+  cursor:none;transition:all 0.2s;
+  font-weight:500;
+}
+.nav-btn.ghost{
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--m);
+}
+.nav-btn.ghost:hover{border-color:var(--border2);color:#fff}
+.nav-btn.solid{
+  background:#fff;color:#000;border:none;
+  font-weight:600;
+}
+.nav-btn.solid:hover{background:rgba(255,255,255,0.9)}
+
+/* HERO */
+.hero{
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;padding:80px 24px 60px;
+}
+
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(79,111,255,0.08);
+  border:1px solid rgba(79,111,255,0.2);
+  border-radius:999px;padding:6px 16px;
+  font-size:0.72rem;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--a);
+  margin-bottom:36px;opacity:0;
+  font-weight:500;
+}
+.badge-dot{
+  width:5px;height:5px;
+  background:var(--a);border-radius:50%;
+  animation:bdot 2s infinite;
+}
+@keyframes bdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.8)}}
+
+.hero-title{
+  font-family:'Instrument Serif',serif;
+  font-size:clamp(3.5rem,9vw,8rem);
+  line-height:1;letter-spacing:-2px;
+  margin-bottom:20px;opacity:0;
+}
+.hero-title .t1{display:block;color:#fff}
+.hero-title .t2{
+  display:block;font-style:italic;
+  background:linear-gradient(135deg,var(--a) 0%,var(--a2) 50%,var(--a3) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.hero-title .t3{display:block;color:rgba(255,255,255,0.12)}
+
+.hero-sub{
+  font-size:1rem;color:var(--m);
+  max-width:480px;line-height:1.75;
+  margin-bottom:40px;font-weight:300;
+  opacity:0;letter-spacing:0.2px;
+}
+
+.hero-cta{
+  display:flex;gap:10px;align-items:center;
+  opacity:0;margin-bottom:64px;
+}
+.cta-primary{
+  display:flex;align-items:center;gap:8px;
+  padding:13px 28px;
+  background:#fff;color:#000;
+  border:none;border-radius:10px;
+  font-family:'Geist',sans-serif;
+  font-size:0.88rem;font-weight:600;
+  cursor:none;transition:all 0.25s;
+}
+.cta-primary:hover{background:rgba(255,255,255,0.9);transform:translateY(-1px);box-shadow:0 8px 32px rgba(255,255,255,0.1)}
+.cta-secondary{
+  padding:13px 24px;
+  background:transparent;
+  border:1px solid var(--border);
+  border-radius:10px;color:var(--m);
+  font-family:'Geist',sans-serif;
+  font-size:0.88rem;cursor:none;
+  transition:all 0.25s;
+}
+.cta-secondary:hover{border-color:var(--border2);color:#fff}
+
+/* TICKER */
+.ticker{
+  width:100%;overflow:hidden;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  padding:14px 0;
+  background:rgba(13,13,18,0.5);
+  backdrop-filter:blur(10px);
+  opacity:0;
+}
+.ticker-inner{
+  display:flex;gap:48px;
+  animation:tick 20s linear infinite;
+  white-space:nowrap;
+}
+@keyframes tick{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.tick-item{
+  display:flex;align-items:center;gap:10px;
+  font-size:0.75rem;color:var(--m);
+  letter-spacing:1px;text-transform:uppercase;
+  font-weight:500;
+}
+.tick-star{color:var(--a);font-size:0.6rem}
+
+/* BUILDER SECTION */
+.builder-section{
+  max-width:1000px;margin:100px auto;
+  padding:0 24px;
+}
+.sec-label{
+  font-size:0.7rem;letter-spacing:3px;
+  text-transform:uppercase;color:var(--a);
+  margin-bottom:12px;font-weight:600;
+}
+.sec-title{
+  font-family:'Instrument Serif',serif;
+  font-size:clamp(2rem,4vw,3rem);
+  letter-spacing:-1px;margin-bottom:8px;
+  line-height:1.1;
+}
+.sec-sub{
+  font-size:0.88rem;color:var(--m);
+  margin-bottom:48px;font-weight:300;
+  line-height:1.6;
+}
+
+/* BUILDER CARD */
+.builder-card{
+  background:var(--s1);
+  border:1px solid var(--border);
+  border-radius:var(--r2);
+  overflow:hidden;
+  box-shadow:0 0 0 1px rgba(255,255,255,0.02),0 40px 80px rgba(0,0,0,0.5);
+}
+
+/* TOP BAR */
+.card-topbar{
+  display:flex;align-items:center;
+  justify-content:space-between;
+  padding:14px 20px;
+  border-bottom:1px solid var(--border);
+  background:var(--s2);
+}
+.topbar-dots{display:flex;gap:6px}
+.topbar-dots span{
+  width:10px;height:10px;border-radius:50%;
+}
+.topbar-dots span:nth-child(1){background:#ff5f57}
+.topbar-dots span:nth-child(2){background:#ffbd2e}
+.topbar-dots span:nth-child(3){background:#28c840}
+.topbar-url{
+  font-size:0.75rem;color:var(--m);
+  background:var(--s3);
+  padding:5px 16px;border-radius:6px;
+  border:1px solid var(--border);
+  letter-spacing:0.3px;
+}
+
+/* TYPE TOGGLE */
+.type-toggle{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:1px;background:var(--border);
+  border-bottom:1px solid var(--border);
+}
+.type-opt{
+  padding:16px;
+  background:var(--s1);
+  border:none;color:var(--m);
+  font-family:'Geist',sans-serif;
+  font-size:0.82rem;cursor:none;
+  transition:all 0.2s;
+  display:flex;align-items:center;
+  justify-content:center;gap:8px;
+  font-weight:500;letter-spacing:0.3px;
+}
+.type-opt.active{
+  background:var(--s2);color:#fff;
+}
+.type-opt:hover:not(.active){color:rgba(255,255,255,0.6)}
+
+/* PROMPT AREA */
+.prompt-area{padding:24px}
+
+.prompt-label{
+  font-size:0.7rem;letter-spacing:2px;
+  text-transform:uppercase;color:var(--m);
+  margin-bottom:10px;font-weight:600;
+  display:flex;align-items:center;gap:8px;
+}
+.prompt-label::after{
+  content:'';flex:1;height:1px;
+  background:var(--border);
+}
+
+textarea{
+  width:100%;background:var(--s2);
+  border:1px solid var(--border);
+  border-radius:var(--r);color:#fff;
+  font-family:'Geist',sans-serif;
+  font-size:0.92rem;padding:16px;
+  resize:none;min-height:110px;
+  outline:none;transition:border 0.2s;
+  line-height:1.65;font-weight:300;
+  letter-spacing:0.2px;
+}
+textarea:focus{border-color:rgba(79,111,255,0.4)}
+textarea::placeholder{color:var(--m2)}
+
+/* CHIPS */
+.chips{
+  display:flex;flex-wrap:wrap;gap:6px;
+  margin:12px 0 20px;
+}
+.chip{
+  background:var(--s2);
+  border:1px solid var(--border);
+  border-radius:999px;
+  padding:5px 14px;font-size:0.73rem;
+  color:var(--m);cursor:none;
+  transition:all 0.2s;
+  font-family:'Geist',sans-serif;
+}
+.chip:hover{
+  border-color:rgba(79,111,255,0.3);
+  color:rgba(255,255,255,0.7);
+}
+
+/* GENERATE BTN */
+.gen-btn{
+  width:100%;padding:15px;
+  background:#fff;color:#000;
+  border:none;border-radius:10px;
+  font-family:'Geist',sans-serif;
+  font-size:0.88rem;font-weight:600;
+  cursor:none;transition:all 0.25s;
+  letter-spacing:0.3px;
+  display:flex;align-items:center;
+  justify-content:center;gap:8px;
+}
+.gen-btn:hover:not(:disabled){
+  background:rgba(255,255,255,0.92);
+  transform:translateY(-1px);
+  box-shadow:0 8px 24px rgba(255,255,255,0.08);
+}
+.gen-btn:disabled{opacity:0.4;cursor:not-allowed}
+.gen-icon{font-size:0.85rem}
+
+/* LOADER */
+.loader{display:none;padding:20px 24px}
+.loader-track{
+  height:1px;background:var(--border);
+  border-radius:999px;overflow:hidden;margin-bottom:16px;
+}
+.loader-fill{
+  height:100%;width:0%;
+  background:linear-gradient(90deg,var(--a),var(--a2),var(--a3));
+  border-radius:999px;
+  transition:width 0.5s ease;
+}
+.loader-steps{
+  display:flex;justify-content:space-between;
+  align-items:center;
+}
+.lstep{
+  font-size:0.7rem;letter-spacing:1px;
+  text-transform:uppercase;color:var(--m2);
+  transition:all 0.3s;font-weight:500;
+  display:flex;align-items:center;gap:6px;
+}
+.lstep.on{color:var(--a)}
+.lstep.done{color:var(--m)}
+.lstep-dot{
+  width:4px;height:4px;border-radius:50%;
+  background:currentColor;
+}
+
+/* OUTPUT */
+#out{display:none;border-top:1px solid var(--border)}
+.out-topbar{
+  display:flex;align-items:center;
+  justify-content:space-between;
+  padding:12px 20px;
+  background:var(--s2);
+  border-bottom:1px solid var(--border);
+}
+.out-tabs{display:flex;gap:4px}
+.otab{
+  padding:5px 14px;border-radius:6px;
+  font-size:0.75rem;cursor:none;
+  border:1px solid transparent;
+  background:transparent;color:var(--m);
+  font-family:'Geist',sans-serif;
+  transition:all 0.2s;font-weight:500;
+}
+.otab.on{
+  background:var(--s3);
+  border-color:var(--border);color:#fff;
+}
+.out-actions{display:flex;gap:6px}
+.act{
+  padding:5px 14px;border-radius:6px;
+  font-size:0.75rem;cursor:none;
+  border:1px solid var(--border);
+  background:transparent;color:var(--m);
+  font-family:'Geist',sans-serif;
+  transition:all 0.2s;font-weight:500;
+}
+.act:hover{color:#fff;border-color:rgba(255,255,255,0.15)}
+
+#frame{
+  width:100%;height:640px;
+  background:#fff;display:block;border:none;
+}
+#codeblock{
+  display:none;
+  background:#030307;padding:24px;
+  font-family:'Courier New',monospace;
+  font-size:0.72rem;color:#4ade80;
+  max-height:640px;overflow:auto;
+  white-space:pre-wrap;word-break:break-all;
+  line-height:1.9;
+}
+
+/* HOW IT WORKS */
+.how-section{
+  max-width:1000px;margin:120px auto;padding:0 24px;
+}
+.steps-row{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:16px;margin-top:48px;
+}
+.step-item{
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:var(--r2);padding:32px;
+  transition:all 0.3s;position:relative;
+  overflow:hidden;
+}
+.step-item::before{
+  content:'';position:absolute;
+  top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--a),transparent);
+  opacity:0;transition:opacity 0.3s;
+}
+.step-item:hover{border-color:var(--border2);transform:translateY(-3px)}
+.step-item:hover::before{opacity:1}
+.step-n{
+  font-family:'Instrument Serif',serif;
+  font-size:3.5rem;color:var(--m2);
+  line-height:1;margin-bottom:20px;
+  font-style:italic;
+}
+.step-t{font-size:0.95rem;font-weight:600;margin-bottom:8px;letter-spacing:-0.3px}
+.step-d{font-size:0.82rem;color:var(--m);line-height:1.65;font-weight:300}
+
+/* PRICING */
+.pricing-section{
+  max-width:1000px;margin:120px auto;padding:0 24px;
+}
+.pricing-note{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(56,189,248,0.08);
+  border:1px solid rgba(56,189,248,0.2);
+  border-radius:999px;padding:6px 16px;
+  font-size:0.72rem;color:var(--a3);
+  margin-bottom:16px;font-weight:500;
+  letter-spacing:0.5px;
+}
+.plans-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:16px;margin-top:48px;
+}
+.plan{
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:var(--r2);padding:32px;
+  transition:all 0.3s;
+}
+.plan:hover{transform:translateY(-4px);border-color:var(--border2)}
+.plan.pro{
+  background:linear-gradient(135deg,rgba(79,111,255,0.08),rgba(167,139,250,0.05));
+  border-color:rgba(79,111,255,0.25);
+}
+.plan-tag{
+  font-size:0.65rem;letter-spacing:2px;
+  text-transform:uppercase;color:var(--m);
+  margin-bottom:24px;font-weight:600;
+}
+.plan.pro .plan-tag{color:var(--a)}
+.plan-price{
+  font-family:'Instrument Serif',serif;
+  font-size:3rem;line-height:1;
+  letter-spacing:-1px;margin-bottom:4px;
+}
+.plan-price-note{font-size:0.78rem;color:var(--m);margin-bottom:24px;font-weight:300}
+.plan-divider{
+  height:1px;background:var(--border);
+  margin-bottom:24px;
+}
+.plan-features{list-style:none;margin-bottom:28px}
+.plan-features li{
+  font-size:0.82rem;color:rgba(255,255,255,0.6);
+  padding:8px 0;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+  font-weight:300;letter-spacing:0.2px;
+}
+.plan-features li:last-child{border:none}
+.plan-features li .check{color:var(--a);font-size:0.7rem}
+.plan-btn{
+  width:100%;padding:12px;border-radius:8px;
+  font-family:'Geist',sans-serif;font-size:0.82rem;
+  cursor:none;transition:all 0.25s;font-weight:500;
+  letter-spacing:0.3px;
+}
+.plan-btn.outline{
+  background:transparent;
+  border:1px solid var(--border);color:var(--m);
+}
+.plan-btn.outline:hover{border-color:var(--border2);color:#fff}
+.plan-btn.filled{
+  background:#fff;border:none;color:#000;font-weight:600;
+}
+.plan-btn.filled:hover{background:rgba(255,255,255,0.92)}
+
+/* SHOPIFY NOTE */
+.shopify-note{
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:var(--r2);padding:28px 32px;
+  margin-top:20px;
+  display:flex;align-items:center;gap:20px;
+}
+.note-icon{font-size:1.4rem}
+.note-title{font-size:0.88rem;font-weight:600;margin-bottom:4px}
+.note-desc{font-size:0.8rem;color:var(--m);font-weight:300;line-height:1.5}
+
+/* FOOTER */
+footer{
+  border-top:1px solid var(--border);
+  padding:32px 40px;
+  display:flex;align-items:center;
+  justify-content:space-between;
+  background:rgba(6,6,9,0.9);
+}
+.footer-logo{
+  font-family:'Instrument Serif',serif;
+  font-size:1.2rem;color:rgba(255,255,255,0.5);
+}
+.footer-tagline{
+  font-size:0.75rem;color:var(--m);
+  letter-spacing:0.3px;font-weight:300;
+}
+
+@media(max-width:768px){
+  nav{padding:0 20px}
+  .nav-center{display:none}
+  .steps-row,.plans-grid{grid-template-columns:1fr}
+  .type-toggle{grid-template-columns:1fr 1fr}
+  footer{flex-direction:column;gap:8px;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<div id="c1"></div>
+<div id="c2"></div>
+<canvas id="bg"></canvas>
+
+<div class="z1">
+
+<!-- NAV -->
+<nav>
+  <div class="logo">DevWeb<sup>AI</sup></div>
+  <div class="nav-center">
+    <a class="nav-link" href="#builder">Builder</a>
+    <a class="nav-link" href="#how">How it works</a>
+    <a class="nav-link" href="#pricing">Pricing</a>
+  </div>
+  <div class="nav-right">
+    <button class="nav-btn ghost">Sign in</button>
+    <button class="nav-btn solid">Start free</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge" id="hbadge">
+    <div class="badge-dot"></div>
+    AI-Powered Website Builder
+  </div>
+  <h1 class="hero-title" id="htitle">
+    <span class="t1">Your website,</span>
+    <span class="t2">built by AI.</span>
+    <span class="t3">In seconds.</span>
+  </h1>
+  <p class="hero-sub" id="hsub">Describe your vision. DevWeb's AI builds a stunning, production-ready website or store — complete with 3D animations, custom design, and your branding.</p>
+  <div class="hero-cta" id="hcta">
+    <button class="cta-primary" onclick="scrollTo('builder')">
+      <span>Start building free</span>
+      <span>→</span>
+    </button>
+    <button class="cta-secondary" onclick="scrollTo('how')">See how it works</button>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker" id="ticker">
+  <div class="ticker-inner">
+    <span class="tick-item"><span class="tick-star">✦</span> Website Builder</span>
+    <span class="tick-item"><span class="tick-star">✦</span> Online Store Builder</span>
+    <span class="tick-item"><span class="tick-star">✦</span> 3D Animations</span>
+    <span class="tick-item"><span class="tick-star">✦</span> Custom Domain</span>
+    <span class="tick-item"><span class="tick-star">✦</span> No Code Required</span>
+    <span class="tick-item"><span class="tick-star">✦</span> Launch in 60 Seconds</span>
+    <span class="tick-item"><span class="tick-star">✦</span> Website Builder</span>
+    <span class="tick-item"><span class="tick-star">✦</span> Online Store Builder</span>
+    <span class="tick-item"><span class="tick-star">✦</span> 3D Animations</span>
+    <span class="tick-item"><span class="tick-star">✦</span> Custom Domain</span>
+    <span class="tick-item"><span class="tick-star">✦</span> No Code Required</span>
+    <span class="tick-item"><span class="tick-star">✦</span> Launch in 60 Seconds</span>
+  </div>
+</div>
+
+<!-- BUILDER -->
+<section class="builder-section" id="builder">
+  <div class="sec-label">// Builder</div>
+  <div class="sec-title">Build something <em style="font-family:'Instrument Serif',serif;font-style:italic">great.</em></div>
+  <div class="sec-sub">Describe your website or store below. Our AI handles the design, animations, and code.</div>
+
+  <div class="builder-card">
+    <div class="card-topbar">
+      <div class="topbar-dots">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="topbar-url" id="urlbar">devweb.app/preview</div>
+      <div style="width:80px"></div>
+    </div>
+
+    <div class="type-toggle">
+      <button class="type-opt active" onclick="setType(this,'website')">
+        ◻ Website
+      </button>
+      <button class="type-opt" onclick="setType(this,'store')">
+        ◈ Online Store
+      </button>
+    </div>
+
+    <div class="prompt-area">
+      <div class="prompt-label">Describe your vision</div>
+      <textarea id="prompt" rows="4" placeholder="A cinematic website for a luxury architecture firm called 'Forma'. Dark minimal aesthetic, dramatic typography, floating 3D geometric shapes, portfolio of projects..."></textarea>
+
+      <div class="chips">
+        <span class="chip" onclick="fill(this)">Luxury brand website</span>
+        <span class="chip" onclick="fill(this)">Tech startup landing page</span>
+        <span class="chip" onclick="fill(this)">3D gaming studio</span>
+        <span class="chip" onclick="fill(this)">Fashion store</span>
+        <span class="chip" onclick="fill(this)">Creative portfolio</span>
+        <span class="chip" onclick="fill(this)">Restaurant website</span>
+      </div>
+
+      <button class="gen-btn" id="gbtn" onclick="generate()">
+        <span class="gen-icon">✦</span>
+        <span id="gbtn-text">Generate with AI</span>
+      </button>
+    </div>
+
+    <div class="loader" id="loader">
+      <div class="loader-track"><div class="loader-fill" id="lfill"></div></div>
+      <div class="loader-steps">
+        <span class="lstep" id="ls1"><span class="lstep-dot"></span>Analyzing</span>
+        <span class="lstep" id="ls2"><span class="lstep-dot"></span>Designing</span>
+        <span class="lstep" id="ls3"><span class="lstep-dot"></span>Building</span>
+        <span class="lstep" id="ls4"><span class="lstep-dot"></span>Rendering</span>
+      </div>
+    </div>
+
+    <div id="out">
+      <div class="out-topbar">
+        <div class="out-tabs">
+          <button class="otab on" onclick="switchTab('preview',this)">Preview</button>
+          <button class="otab" onclick="switchTab('code',this)">Code</button>
+        </div>
+        <div class="out-actions">
+          <button class="act" onclick="dlHTML()">Download HTML</button>
+          <button class="act" onclick="generate()">Regenerate</button>
+        </div>
+      </div>
+      <iframe id="frame" sandbox="allow-scripts"></iframe>
+      <pre id="codeblock"></pre>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section" id="how">
+  <div class="sec-label">// How it works</div>
+  <div class="sec-title">Simple as<br><em style="font-family:'Instrument Serif',serif;font-style:italic">one, two, three.</em></div>
+  <div class="steps-row">
+    <div class="step-item">
+      <div class="step-n">01</div>
+      <div class="step-t">Describe</div>
+      <div class="step-d">Type your vision in plain language. Tell us your brand name, style, colors, and what you need. No technical knowledge required.</div>
+    </div>
+    <div class="step-item">
+      <div class="step-n">02</div>
+      <div class="step-t">AI Builds</div>
+      <div class="step-d">DevWeb's AI generates a complete, cinematic website with 3D animations, custom typography, and professional design — in under 60 seconds.</div>
+    </div>
+    <div class="step-item">
+      <div class="step-n">03</div>
+      <div class="step-t">Publish</div>
+      <div class="step-d">Connect your own domain or use a free DevWeb subdomain. Your site is live instantly. Download the code anytime — it's yours.</div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing-section" id="pricing">
+  <div class="sec-label">// Pricing</div>
+  <div class="pricing-note">✦ Build free — pay when you publish</div>
+  <div class="sec-title">Transparent <em style="font-family:'Instrument Serif',serif;font-style:italic">pricing.</em></div>
+  <div class="sec-sub">Generate unlimited websites for free. Subscribe only when you're ready to publish and go live.</div>
+
+  <div class="plans-grid" style="grid-template-columns:repeat(4,1fr)">
+
+    <div class="plan">
+      <div class="plan-tag">Free</div>
+      <div class="plan-price" style="font-size:2rem">$0</div>
+      <div class="plan-price-note">Forever free</div>
+      <div class="plan-divider"></div>
+      <ul class="plan-features">
+        <li><span class="check">✓</span>Unlimited generations</li>
+        <li><span class="check">✓</span>Full preview access</li>
+        <li><span class="check">✓</span>Website + Store builder</li>
+        <li style="opacity:0.3"><span class="check">—</span>Publish to web</li>
+        <li style="opacity:0.3"><span class="check">—</span>Custom domain</li>
+        <li style="opacity:0.3"><span class="check">—</span>Download HTML</li>
+      </ul>
+      <button class="plan-btn outline">Start free</button>
+    </div>
+
+    <div class="plan" style="border-color:rgba(56,189,248,0.25);background:rgba(56,189,248,0.04)">
+      <div class="plan-tag" style="color:var(--a3)">Trial</div>
+      <div class="plan-price" style="font-size:2rem">$1</div>
+      <div class="plan-price-note">first month · then $20/mo</div>
+      <div class="plan-divider"></div>
+      <ul class="plan-features">
+        <li><span class="check" style="color:var(--a3)">✓</span>Full Pro access</li>
+        <li><span class="check" style="color:var(--a3)">✓</span>1 website published</li>
+        <li><span class="check" style="color:var(--a3)">✓</span>yourname.devweb.app</li>
+        <li><span class="check" style="color:var(--a3)">✓</span>Custom domain connect</li>
+        <li><span class="check" style="color:var(--a3)">✓</span>No DevWeb branding</li>
+        <li><span class="check" style="color:var(--a3)">✓</span>Cancel anytime</li>
+      </ul>
+      <button class="plan-btn outline" style="border-color:rgba(56,189,248,0.3);color:var(--a3)">Try for $1</button>
+    </div>
+
+    <div class="plan pro">
+      <div class="plan-tag">Pro</div>
+      <div class="plan-price" style="font-size:2rem">$20</div>
+      <div class="plan-price-note">per month · billed monthly</div>
+      <div class="plan-divider"></div>
+      <ul class="plan-features">
+        <li><span class="check">✓</span>3 websites published</li>
+        <li><span class="check">✓</span>yourname.devweb.app</li>
+        <li><span class="check">✓</span>Custom domain connect</li>
+        <li><span class="check">✓</span>No DevWeb branding</li>
+        <li><span class="check">✓</span>Priority AI generation</li>
+        <li><span class="check">✓</span>Email support</li>
+      </ul>
+      <button class="plan-btn filled">Get Pro</button>
+    </div>
+
+    <div class="plan">
+      <div class="plan-tag">Business</div>
+      <div class="plan-price" style="font-size:2rem">$50</div>
+      <div class="plan-price-note">per month · billed monthly</div>
+      <div class="plan-divider"></div>
+      <ul class="plan-features">
+        <li><span class="check">✓</span>Unlimited websites</li>
+        <li><span class="check">✓</span>White label — your brand</li>
+        <li><span class="check">✓</span>Team members access</li>
+        <li><span class="check">✓</span>Client dashboard</li>
+        <li><span class="check">✓</span>API access</li>
+        <li><span class="check">✓</span>Priority support</li>
+      </ul>
+      <button class="plan-btn outline">Contact sales</button>
+    </div>
+
+  </div>
+
+  <div class="shopify-note">
+    <div class="note-icon">💡</div>
+    <div>
+      <div class="note-title">How it works — Build free, pay to publish</div>
+      <div class="note-desc">Build and preview completely free — no credit card needed. Ready to go live? Start with just $1 for your first month. Don't pay → site goes offline. Pay again → back online instantly. Connect your own domain from GoDaddy, Namecheap, or any registrar.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">DevWeb</div>
+  <div class="footer-tagline">Describe it. Build it. Launch it. — © 2025 DevWeb</div>
+</footer>
+
+</div>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+// CURSOR
+const c1=document.getElementById('c1'),c2=document.getElementById('c2');
+document.addEventListener('mousemove',e=>{
+  c1.style.left=e.clientX+'px';c1.style.top=e.clientY+'px';
+  setTimeout(()=>{c2.style.left=e.clientX+'px';c2.style.top=e.clientY+'px'},70);
+});
+
+// THREE.JS BG
+const canvas=document.getElementById('bg');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+renderer.setSize(window.innerWidth,window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+const scene=new THREE.Scene();
+const cam=new THREE.PerspectiveCamera(65,window.innerWidth/window.innerHeight,0.1,100);
+cam.position.z=7;
+
+// Particles
+const pg=new THREE.BufferGeometry();
+const pc=3000;const pp=new Float32Array(pc*3);
+for(let i=0;i<pc*3;i++)pp[i]=(Math.random()-0.5)*30;
+pg.setAttribute('position',new THREE.BufferAttribute(pp,3));
+const pm=new THREE.PointsMaterial({size:0.012,color:0x4f6fff,transparent:true,opacity:0.4});
+const pts=new THREE.Points(pg,pm);scene.add(pts);
+
+// Lines grid
+const lg=new THREE.BufferGeometry();
+const lp=[];
+for(let i=-10;i<=10;i+=2){
+  lp.push(i,-6,-5,i,6,-5);
+  lp.push(-10,i,-5,10,i,-5);
+}
+lg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(lp),3));
+const lm=new THREE.LineBasicMaterial({color:0x1a1a2e,transparent:true,opacity:0.8});
+scene.add(new THREE.LineSegments(lg,lm));
+
+// Floating rings
+const rings=[];
+for(let i=0;i<4;i++){
+  const g=new THREE.TorusGeometry(1.2+i*0.7,0.004,8,80);
+  const m=new THREE.MeshBasicMaterial({color:i%2===0?0x4f6fff:0xa78bfa,transparent:true,opacity:0.06+i*0.02});
+  const r=new THREE.Mesh(g,m);
+  r.rotation.x=Math.random()*Math.PI;
+  r.rotation.y=Math.random()*Math.PI;
+  scene.add(r);rings.push(r);
+}
+
+// Icosahedron
+const ig=new THREE.IcosahedronGeometry(1.2,1);
+const im=new THREE.MeshBasicMaterial({color:0x4f6fff,wireframe:true,transparent:true,opacity:0.04});
+const ico=new THREE.Mesh(ig,im);ico.position.set(4,1,-2);scene.add(ico);
+
+let mx=0,my=0;
+document.addEventListener('mousemove',e=>{
+  mx=(e.clientX/window.innerWidth-0.5)*0.3;
+  my=(e.clientY/window.innerHeight-0.5)*0.3;
+});
+window.addEventListener('resize',()=>{
+  cam.aspect=window.innerWidth/window.innerHeight;
+  cam.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth,window.innerHeight);
+});
+
+(function loop(){
+  requestAnimationFrame(loop);
+  const t=Date.now()*0.001;
+  pts.rotation.y=t*0.015;pts.rotation.x=t*0.008;
+  rings.forEach((r,i)=>{r.rotation.x+=0.0015*(i+1);r.rotation.z+=0.001*(i+1);});
+  ico.rotation.y+=0.004;ico.rotation.x+=0.002;
+  cam.position.x+=(mx-cam.position.x)*0.025;
+  cam.position.y+=(-my-cam.position.y)*0.025;
+  renderer.render(scene,cam);
+})();
+
+// GSAP ANIMATIONS
+const tl=gsap.timeline({delay:0.2});
+tl.to('#hbadge',{opacity:1,y:0,duration:0.6,ease:'power3.out'})
+  .from('#hbadge',{y:16},'-=0.6')
+  .to('#htitle',{opacity:1,y:0,duration:0.9,ease:'power3.out'},'-=0.2')
+  .from('#htitle .t1',{y:50,duration:0.7},'-=0.7')
+  .from('#htitle .t2',{y:50,duration:0.7},'-=0.5')
+  .from('#htitle .t3',{y:50,duration:0.7},'-=0.5')
+  .to('#hsub',{opacity:1,y:0,duration:0.6,ease:'power3.out'},'-=0.3')
+  .from('#hsub',{y:16},'-=0.6')
+  .to('#hcta',{opacity:1,y:0,duration:0.5,ease:'power3.out'},'-=0.2')
+  .from('#hcta',{y:12},'-=0.5')
+  .to('#ticker',{opacity:1,duration:0.5},'-=0.1');
+
+gsap.utils.toArray('.step-item,.plan').forEach(el=>{
+  gsap.from(el,{
+    opacity:0,y:30,duration:0.7,ease:'power3.out',
+    scrollTrigger:{trigger:el,start:'top 85%'}
+  });
+});
+
+// APP
+let currentType='website';
+let generatedHTML='';
+
+const EX={
+  'Luxury brand website':'A cinematic luxury brand website for "Noir Maison". Ultra dark background, gold particle effects, elegant serif typography, slow-motion product reveals, exclusive members section. Inspired by Chanel and Louis Vuitton.',
+  'Tech startup landing page':'A bold, modern landing page for a SaaS startup called "Meridian". Clean dark design, animated product demo mockups, feature highlights, testimonials, pricing section. Think Linear or Vercel aesthetic.',
+  '3D gaming studio':'A dramatic gaming studio website for "Apex Forge". Neon green and black, particle explosions, featured game showcases with 3D card effects, team section, careers page. High-energy cinematic feel.',
+  'Fashion store':'A premium online fashion store for "Atelier Blanc". Minimal white and black, editorial photography placeholders, product grid with hover animations, size guide, shopping cart. Think Net-a-Porter.',
+  'Creative portfolio':'A striking creative portfolio for a digital artist named "Maya Chen". Bold asymmetric layout, case study showcases, skills visualization, contact form. Dark with electric blue accents.',
+  'Restaurant website':'A fine dining restaurant website for "Ember". Warm dark tones, food photography placeholders, animated menu reveal, reservation system, chef story section. Sophisticated and appetizing.'
+};
+
+function fill(el){
+  const t=EX[el.textContent.trim()];
+  if(t)document.getElementById('prompt').value=t;
+}
+
+function setType(btn,type){
+  currentType=type;
+  document.querySelectorAll('.type-opt').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function switchTab(t,btn){
+  document.querySelectorAll('.otab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('frame').style.display=t==='preview'?'block':'none';
+  document.getElementById('codeblock').style.display=t==='code'?'block':'none';
+}
+
+function dlHTML(){
+  const b=new Blob([generatedHTML],{type:'text/html'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(b);
+  a.download='devweb-site.html';a.click();
+}
+
+function scrollTo(id){
+  const el=document.getElementById(id);
+  if(el)el.scrollIntoView({behavior:'smooth'});
+}
+
+async function animLoad(){
+  const f=document.getElementById('lfill');
+  const steps=['ls1','ls2','ls3','ls4'];
+  for(let i=0;i<steps.length;i++){
+    document.getElementById(steps[i]).classList.add('on');
+    f.style.width=((i+1)*25)+'%';
+    await new Promise(r=>setTimeout(r,650));
+  }
+}
+
+async function generate(){
+  const p=document.getElementById('prompt').value.trim();
+  if(!p){alert('Please describe your website first.');return;}
+
+  const btn=document.getElementById('gbtn');
+  const txtEl=document.getElementById('gbtn-text');
+  const loader=document.getElementById('loader');
+  const out=document.getElementById('out');
+
+  btn.disabled=true;
+  txtEl.textContent='Building your website...';
+  loader.style.display='block';
+  out.style.display='none';
+  document.getElementById('lfill').style.width='0%';
+  ['ls1','ls2','ls3','ls4'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.classList.remove('on','done');
+  });
+
+  animLoad();
+
+  const isStore=currentType==='store';
+
+  const sys=`You are an elite creative web developer building award-winning websites. Generate a COMPLETE single-file HTML document.
+
+MANDATORY TECHNICAL REQUIREMENTS:
+- Import Three.js CDN: https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js
+- Import GSAP CDN: https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js
+- Import Google Fonts in <head>
+- Custom CSS cursor (hide default)
+- Smooth scroll behavior
+- All CSS variables in :root
+- Fully responsive design
+
+VISUAL REQUIREMENTS:
+- Three.js animated 3D background (particles, geometric shapes relevant to the brand)
+- GSAP page-load animations with staggered reveals
+- Smooth hover micro-interactions on all elements
+- Cinematic, high-end aesthetic matching the described brand
+- Professional typography — choose distinctive, characterful fonts
+- Bold, dramatic hero section
+- Generous spacing — luxury feel
+- Subtle grain texture overlay using CSS
+
+${isStore?`STORE SPECIFIC SECTIONS:
+- Navigation with cart icon + counter
+- Hero with offer/campaign
+- Product grid (8 products) with: image placeholder (gradient+emoji), name, price in ₹, Add to Cart button
+- Working cart counter
+- Features/benefits section
+- Footer with links`:`WEBSITE SPECIFIC SECTIONS:
+- Full navigation
+- Dramatic hero
+- About / features section
+- Portfolio/showcase grid
+- Testimonials or stats
+- Contact section
+- Professional footer`}
+
+CRITICAL: Make it look like it cost $15,000 to build professionally.
+Match the aesthetic EXACTLY to the user's description.
+Be bold. Be dramatic. Be unforgettable.
+
+Output ONLY raw HTML starting with <!DOCTYPE html>. Zero explanation. Zero markdown.`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:6000,
+        system:sys,
+        messages:[{role:'user',content:`Build this ${currentType}: ${p}`}]
+      })
+    });
+
+    const data=await res.json();
+    if(data.error)throw new Error(data.error.message);
+
+    let html=data.content.map(c=>c.text||'').join('');
+    html=html.replace(/```html\n?/gi,'').replace(/```\n?/g,'').trim();
+    generatedHTML=html;
+
+    const nameMatch=html.match(/<title>(.*?)<\/title>/i);
+    const name=nameMatch?nameMatch[1].toLowerCase().replace(/\s+/g,'-'):'my-site';
+    document.getElementById('urlbar').textContent=`${name}.devweb.app`;
+
+    document.getElementById('frame').srcdoc=html;
+    document.getElementById('codeblock').textContent=html;
+
+    loader.style.display='none';
+    out.style.display='block';
+
+    gsap.from('#out',{opacity:0,y:16,duration:0.4,ease:'power3.out'});
+    out.scrollIntoView({behavior:'smooth',block:'start'});
+
+  }catch(e){
+    loader.style.display='none';
+    alert('Something went wrong. Please try again.');
+    console.error(e);
+  }
+
+  btn.disabled=false;
+  txtEl.textContent='Generate with AI';
+}
+
+document.getElementById('prompt').addEventListener('keydown',e=>{
+  if(e.ctrlKey&&e.key==='Enter')generate();
+});
+</script>
+</body>
+</html>

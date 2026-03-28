@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevWeb — Editor</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#060609;color:#fff;font-family:'Geist',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* TOP BAR */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;height:52px;
+  background:#0d0d12;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  flex-shrink:0;
+}
+.logo{font-family:'Instrument Serif',serif;font-size:1.2rem;}
+.topbar-center{display:flex;align-items:center;gap:8px;flex:1;justify-content:center;}
+.site-name-input{
+  background:#12121a;border:1px solid rgba(255,255,255,0.06);
+  border-radius:8px;color:#fff;
+  font-family:'Geist',sans-serif;font-size:0.85rem;
+  padding:7px 14px;outline:none;width:200px;
+  transition:border 0.2s;
+}
+.site-name-input:focus{border-color:rgba(79,111,255,0.4);}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.tb-btn{
+  padding:8px 16px;border-radius:8px;
+  font-family:'Geist',sans-serif;font-size:0.8rem;
+  cursor:pointer;transition:all 0.2s;font-weight:500;
+}
+.tb-btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.08);color:#52526e;}
+.tb-btn.ghost:hover{color:#fff;border-color:rgba(255,255,255,0.2);}
+.tb-btn.primary{background:#fff;color:#000;border:none;font-weight:600;}
+.tb-btn.primary:hover{background:rgba(255,255,255,0.9);}
+.tb-btn.publish{
+  background:linear-gradient(135deg,#4f6fff,#a78bfa);
+  color:#fff;border:none;font-weight:600;
+}
+.tb-btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* MAIN LAYOUT */
+.editor-layout{display:flex;flex:1;overflow:hidden;}
+
+/* LEFT PANEL */
+.left-panel{
+  width:320px;flex-shrink:0;
+  background:#0d0d12;
+  border-right:1px solid rgba(255,255,255,0.06);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.panel-header{
+  padding:16px 20px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  font-size:0.72rem;letter-spacing:2px;
+  text-transform:uppercase;color:#52526e;
+  font-weight:600;
+}
+.panel-body{padding:16px;overflow-y:auto;flex:1;}
+
+/* TYPE SELECT */
+.type-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px;}
+.type-opt{
+  padding:10px;border-radius:10px;
+  border:1px solid rgba(255,255,255,0.06);
+  background:#12121a;color:#52526e;
+  font-family:'Geist',sans-serif;font-size:0.78rem;
+  cursor:pointer;transition:all 0.2s;text-align:center;font-weight:500;
+}
+.type-opt.active{border-color:rgba(79,111,255,0.4);color:#4f6fff;background:rgba(79,111,255,0.08);}
+
+.inp-label{
+  font-size:0.68rem;letter-spacing:1.5px;
+  text-transform:uppercase;color:#52526e;
+  margin-bottom:8px;font-weight:600;
+  display:block;
+}
+textarea{
+  width:100%;background:#12121a;
+  border:1px solid rgba(255,255,255,0.06);
+  border-radius:10px;color:#fff;
+  font-family:'Geist',sans-serif;
+  font-size:0.85rem;padding:12px;
+  resize:none;min-height:120px;
+  outline:none;transition:border 0.2s;
+  line-height:1.6;font-weight:300;
+  margin-bottom:12px;
+}
+textarea:focus{border-color:rgba(79,111,255,0.3);}
+textarea::placeholder{color:#1a1a2e;}
+
+/* CHIPS */
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px;}
+.chip{
+  background:#12121a;border:1px solid rgba(255,255,255,0.06);
+  border-radius:999px;padding:4px 12px;
+  font-size:0.7rem;color:#52526e;cursor:pointer;
+  transition:all 0.2s;font-family:'Geist',sans-serif;
+}
+.chip:hover{border-color:rgba(79,111,255,0.3);color:#4f6fff;}
+
+/* GEN BUTTON */
+.gen-btn{
+  width:100%;padding:13px;
+  background:#fff;color:#000;
+  border:none;border-radius:10px;
+  font-family:'Geist',sans-serif;
+  font-size:0.88rem;font-weight:600;
+  cursor:pointer;transition:all 0.2s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  margin-bottom:16px;
+}
+.gen-btn:hover:not(:disabled){background:rgba(255,255,255,0.9);}
+.gen-btn:disabled{opacity:0.5;cursor:not-allowed;}
+
+/* LOADER */
+.loader{display:none;margin-bottom:16px;}
+.loader-bar{height:1px;background:rgba(255,255,255,0.06);border-radius:999px;overflow:hidden;margin-bottom:10px;}
+.loader-fill{
+  height:100%;width:0%;
+  background:linear-gradient(90deg,#4f6fff,#a78bfa);
+  border-radius:999px;transition:width 0.5s ease;
+}
+.loader-text{font-size:0.75px;color:#52526e;text-align:center;font-size:0.75rem;}
+
+/* DIVIDER */
+.divider{
+  height:1px;background:rgba(255,255,255,0.04);
+  margin:16px 0;
+}
+
+/* SITE INFO */
+.info-row{
+  display:flex;justify-content:space-between;
+  align-items:center;padding:8px 0;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+  font-size:0.78rem;
+}
+.info-label{color:#52526e;font-weight:300;}
+.info-val{color:#fff;font-weight:500;}
+.status-live{color:#4ade80;}
+.status-draft{color:#52526e;}
+
+/* RIGHT PANEL - PREVIEW */
+.right-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+.preview-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 16px;
+  background:#0d0d12;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  flex-shrink:0;
+}
+.preview-dots span{
+  display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;
+}
+.preview-dots span:nth-child(1){background:#ff5f57;}
+.preview-dots span:nth-child(2){background:#ffbd2e;}
+.preview-dots span:nth-child(3){background:#28c840;}
+.preview-url{
+  flex:1;background:#12121a;
+  border:1px solid rgba(255,255,255,0.06);
+  border-radius:6px;padding:5px 14px;
+  font-size:0.75rem;color:#52526e;
+}
+.preview-tabs{display:flex;gap:4px;}
+.ptab{
+  padding:5px 12px;border-radius:6px;
+  font-size:0.72rem;cursor:pointer;
+  border:1px solid transparent;
+  background:transparent;color:#52526e;
+  font-family:'Geist',sans-serif;transition:all 0.2s;
+}
+.ptab.on{background:#1a1a24;border-color:rgba(255,255,255,0.06);color:#fff;}
+
+/* IFRAME */
+#preview-frame{
+  flex:1;border:none;background:#fff;display:block;
+}
+#code-view{
+  display:none;flex:1;
+  background:#030307;padding:24px;
+  font-family:'Courier New',monospace;
+  font-size:0.72rem;color:#4ade80;
+  overflow:auto;white-space:pre-wrap;
+  word-break:break-all;line-height:1.8;
+}
+
+/* EMPTY STATE */
+.empty-preview{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  color:#52526e;gap:12px;
+  background:#060609;
+}
+.empty-preview .icon{font-size:2rem;opacity:0.3;}
+.empty-preview p{font-size:0.85rem;font-weight:300;}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:24px;right:24px;
+  background:#0d0d12;border:1px solid rgba(255,255,255,0.1);
+  border-radius:10px;padding:12px 20px;
+  font-size:0.82rem;z-index:999;
+  display:none;animation:fadeIn 0.3s ease;
+}
+.toast.show{display:block;}
+.toast.success{border-color:rgba(74,222,128,0.3);color:#4ade80;}
+.toast.error{border-color:rgba(255,107,107,0.3);color:#ff6b6b;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">DevWeb</div>
+  <div class="topbar-center">
+    <input class="site-name-input" id="site-name" placeholder="Website name..." value="">
+  </div>
+  <div class="topbar-right">
+    <button class="tb-btn ghost" onclick="window.location.href='dashboard.html'">← Dashboard</button>
+    <button class="tb-btn ghost" id="save-btn" onclick="saveSite()">Save</button>
+    <button class="tb-btn ghost" id="dl-btn" onclick="downloadHTML()">Download</button>
+    <button class="tb-btn publish" id="publish-btn" onclick="publishSite()">Publish →</button>
+  </div>
+</div>
+
+<!-- EDITOR LAYOUT -->
+<div class="editor-layout">
+
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <div class="panel-header">AI Generator</div>
+    <div class="panel-body">
+
+      <div class="type-row">
+        <div class="type-opt active" onclick="setType(this,'website')">◻ Website</div>
+        <div class="type-opt" onclick="setType(this,'store')">◈ Store</div>
+      </div>
+
+      <label class="inp-label">Describe your vision</label>
+      <textarea id="prompt" placeholder="A cinematic luxury brand website for 'Noir Maison'. Dark background, gold particles, elegant typography..."></textarea>
+
+      <div class="chips">
+        <span class="chip" onclick="fill(this)">Luxury brand</span>
+        <span class="chip" onclick="fill(this)">Tech startup</span>
+        <span class="chip" onclick="fill(this)">Gaming studio</span>
+        <span class="chip" onclick="fill(this)">Fashion store</span>
+        <span class="chip" onclick="fill(this)">Restaurant</span>
+      </div>
+
+      <button class="gen-btn" id="gen-btn" onclick="generate()">
+        <span>✦</span><span id="gen-text">Generate with AI</span>
+      </button>
+
+      <div class="loader" id="loader">
+        <div class="loader-bar"><div class="loader-fill" id="lfill"></div></div>
+        <div class="loader-text" id="ltext">AI is building...</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <label class="inp-label">Site Info</label>
+      <div class="info-row">
+        <span class="info-label">Status</span>
+        <span class="info-val" id="info-status"><span class="status-draft">Draft</span></span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Type</span>
+        <span class="info-val" id="info-type">Website</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">URL</span>
+        <span class="info-val" id="info-url" style="font-size:0.72rem;color:#52526e;">Not published</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="preview-bar">
+      <div class="preview-dots"><span></span><span></span><span></span></div>
+      <div class="preview-url" id="preview-url">devweb.app/preview</div>
+      <div class="preview-tabs">
+        <button class="ptab on" onclick="switchTab('preview',this)">Preview</button>
+        <button class="ptab" onclick="switchTab('code',this)">Code</button>
+      </div>
+    </div>
+
+    <div class="empty-preview" id="empty-state">
+      <div class="icon">◻</div>
+      <p>Describe your website and click Generate</p>
+    </div>
+    <iframe id="preview-frame" style="display:none" sandbox="allow-scripts"></iframe>
+    <pre id="code-view"></pre>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+
+let currentUser = null;
+let currentSiteId = localStorage.getItem('devweb_site_id');
+let generatedHTML = localStorage.getItem('devweb_site_html') || '';
+let selectedType = 'website';
+let currentPlan = 'free';
+
+const EXAMPLES = {
+  'Luxury brand': 'A cinematic luxury brand website for "Noir Maison". Ultra dark background, gold particle effects, elegant serif typography, slow-motion reveals.',
+  'Tech startup': 'A bold SaaS startup landing page for "Meridian". Clean dark design, animated mockups, features, pricing. Think Linear aesthetic.',
+  'Gaming studio': 'A dramatic gaming studio website for "Apex Forge". Neon green and black, particle explosions, game showcases.',
+  'Fashion store': 'A premium fashion store for "Atelier Blanc". Minimal black and white, product grid, shopping cart.',
+  'Restaurant': 'A fine dining restaurant website for "Ember". Warm dark tones, menu reveal, reservation system.'
+};
+
+async function init() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if(!session) { window.location.href = 'login.html'; return; }
+  currentUser = session.user;
+
+  const { data: userData } = await supabase.from('users').select('plan').eq('id', currentUser.id).single();
+  if(userData) currentPlan = userData.plan || 'free';
+
+  // Load existing site if any
+  if(currentSiteId && generatedHTML) {
+    showPreview(generatedHTML);
+    loadSiteInfo();
+  }
+}
+
+async function loadSiteInfo() {
+  if(!currentSiteId) return;
+  const { data } = await supabase.from('sites').select('*').eq('id', currentSiteId).single();
+  if(data) {
+    document.getElementById('site-name').value = data.name;
+    document.getElementById('info-status').innerHTML = data.is_published
+      ? '<span class="status-live">● Live</span>'
+      : '<span class="status-draft">○ Draft</span>';
+    document.getElementById('info-type').textContent = data.type === 'store' ? 'Online Store' : 'Website';
+    document.getElementById('info-url').textContent = data.subdomain ? data.subdomain + '.devweb.app' : 'Not published';
+    document.getElementById('preview-url').textContent = data.subdomain ? data.subdomain + '.devweb.app' : 'devweb.app/preview';
+  }
+}
+
+function fill(el) {
+  const t = EXAMPLES[el.textContent.trim()];
+  if(t) document.getElementById('prompt').value = t;
+}
+
+function setType(el, type) {
+  selectedType = type;
+  document.querySelectorAll('.type-opt').forEach(o => o.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('info-type').textContent = type === 'store' ? 'Online Store' : 'Website';
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.ptab').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('preview-frame').style.display = tab === 'preview' ? 'block' : 'none';
+  document.getElementById('code-view').style.display = tab === 'code' ? 'block' : 'none';
+}
+
+function showPreview(html) {
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('preview-frame').style.display = 'block';
+  document.getElementById('preview-frame').srcdoc = html;
+  document.getElementById('code-view').textContent = html;
+}
+
+async function generate() {
+  const prompt = document.getElementById('prompt').value.trim();
+  if(!prompt) { showToast('Please describe your website', 'error'); return; }
+
+  const btn = document.getElementById('gen-btn');
+  const loader = document.getElementById('loader');
+  btn.disabled = true;
+  document.getElementById('gen-text').textContent = 'Building...';
+  loader.style.display = 'block';
+
+  // Animate loader
+  const fill = document.getElementById('lfill');
+  const ltext = document.getElementById('ltext');
+  const steps = ['Analyzing prompt...', 'Designing layout...', 'Adding 3D magic...', 'Almost ready...'];
+  let i = 0;
+  const interval = setInterval(() => {
+    if(i < steps.length) {
+      fill.style.width = ((i+1) * 25) + '%';
+      ltext.textContent = steps[i];
+      i++;
+    }
+  }, 700);
+
+  try {
+    const html = await generateWithGemini(prompt, selectedType);
+    generatedHTML = html;
+    localStorage.setItem('devweb_site_html', html);
+
+    clearInterval(interval);
+    fill.style.width = '100%';
+    ltext.textContent = 'Done!';
+
+    showPreview(html);
+
+    // Extract name and save
+    const nameMatch = html.match(/<title>(.*?)<\/title>/i);
+    const siteName = nameMatch ? nameMatch[1] : 'My Website';
+    document.getElementById('site-name').value = siteName;
+
+    // Auto save
+    await saveSite(true);
+    showToast('Website generated! ✦', 'success');
+
+  } catch(e) {
+    clearInterval(interval);
+    showToast('Something went wrong. Try again.', 'error');
+    console.error(e);
+  }
+
+  setTimeout(() => { loader.style.display = 'none'; }, 800);
+  btn.disabled = false;
+  document.getElementById('gen-text').textContent = 'Generate with AI';
+}
+
+async function generateWithGemini(prompt, type) {
+  const isStore = type === 'store';
+  const sys = `You are an elite creative web developer. Generate a COMPLETE single-file HTML website. REQUIREMENTS: Import Three.js CDN https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js and GSAP CDN https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js and Google Fonts. Add animated 3D background, GSAP animations, custom cursor, fully responsive. ${isStore ? 'Include nav with cart, hero, product grid (8 products with prices in $), Add to Cart buttons, footer.' : 'Include nav, dramatic hero, about/features, showcase, contact, footer.'} Make it look like it cost $10,000. Output ONLY raw HTML starting with <!DOCTYPE html>. No explanation.`;
+
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: `${sys}\n\nBuild this ${type}: ${prompt}` }] }],
+      generationConfig: { maxOutputTokens: 8192, temperature: 0.9 }
+    })
+  });
+
+  const data = await res.json();
+  let html = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  return html.replace(/```html\n?/gi, '').replace(/```\n?/g, '').trim();
+}
+
+async function saveSite(silent = false) {
+  if(!currentUser || !generatedHTML) return;
+
+  const name = document.getElementById('site-name').value || 'My Website';
+  const subdomain = name.toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 30) + '-' + Date.now().toString().slice(-4);
+
+  if(currentSiteId) {
+    await supabase.from('sites').update({
+      name, html_content: generatedHTML,
+      type: selectedType, updated_at: new Date()
+    }).eq('id', currentSiteId);
+  } else {
+    const { data } = await supabase.from('sites').insert({
+      user_id: currentUser.id,
+      name, type: selectedType,
+      prompt: document.getElementById('prompt').value,
+      html_content: generatedHTML,
+      subdomain, is_published: false, is_active: true
+    }).select().single();
+    if(data) {
+      currentSiteId = data.id;
+      localStorage.setItem('devweb_site_id', data.id);
+    }
+  }
+
+  if(!silent) showToast('Saved!', 'success');
+}
+
+async function publishSite() {
+  if(currentPlan === 'free') {
+    if(confirm('Publishing requires a paid plan. Start for just $1?')) {
+      window.location.href = 'index.html#pricing';
+    }
+    return;
+  }
+
+  if(!currentSiteId) { await saveSite(true); }
+
+  await supabase.from('sites').update({ is_published: true }).eq('id', currentSiteId);
+  document.getElementById('info-status').innerHTML = '<span class="status-live">● Live</span>';
+  showToast('Site is now live! 🚀', 'success');
+  loadSiteInfo();
+}
+
+function downloadHTML() {
+  if(!generatedHTML) { showToast('Generate a website first', 'error'); return; }
+  const b = new Blob([generatedHTML], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = (document.getElementById('site-name').value || 'devweb-site') + '.html';
+  a.click();
+  showToast('Downloaded!', 'success');
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Ctrl+S to save
+document.addEventListener('keydown', e => {
+  if(e.ctrlKey && e.key === 's') { e.preventDefault(); saveSite(); }
+  if(e.ctrlKey && e.key === 'Enter') generate();
+});
+
+init();
+</script>
+</body>
+</html>

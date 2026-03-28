@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevWeb — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#060609;color:#fff;font-family:'Geist',sans-serif;min-height:100vh;}
+
+/* NAV */
+nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 32px;height:56px;
+  background:rgba(6,6,9,0.9);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  position:sticky;top:0;z-index:100;
+  backdrop-filter:blur(20px);
+}
+.logo{font-family:'Instrument Serif',serif;font-size:1.3rem;}
+.nav-right{display:flex;align-items:center;gap:12px;}
+.plan-badge{
+  background:rgba(79,111,255,0.1);
+  border:1px solid rgba(79,111,255,0.2);
+  border-radius:999px;padding:4px 14px;
+  font-size:0.72rem;color:#4f6fff;
+  font-weight:600;letter-spacing:0.5px;
+  text-transform:uppercase;
+}
+.avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,#4f6fff,#a78bfa);
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.8rem;font-weight:600;cursor:pointer;
+}
+.logout-btn{
+  background:transparent;border:1px solid rgba(255,255,255,0.08);
+  border-radius:8px;color:#52526e;padding:6px 14px;
+  font-family:'Geist',sans-serif;font-size:0.78rem;
+  cursor:pointer;transition:all 0.2s;
+}
+.logout-btn:hover{color:#fff;border-color:rgba(255,255,255,0.15);}
+
+/* MAIN */
+main{max-width:1000px;margin:0 auto;padding:40px 24px;}
+
+.page-header{
+  display:flex;align-items:center;
+  justify-content:space-between;margin-bottom:32px;
+}
+.page-title{
+  font-family:'Instrument Serif',serif;
+  font-size:1.8rem;letter-spacing:-0.5px;
+}
+.new-btn{
+  display:flex;align-items:center;gap:8px;
+  padding:11px 22px;
+  background:#fff;color:#000;
+  border:none;border-radius:10px;
+  font-family:'Geist',sans-serif;
+  font-size:0.85rem;font-weight:600;
+  cursor:pointer;transition:all 0.2s;
+}
+.new-btn:hover{background:rgba(255,255,255,0.9);}
+
+/* PLAN BANNER */
+.plan-banner{
+  background:#0d0d12;
+  border:1px solid rgba(255,255,255,0.06);
+  border-radius:16px;padding:20px 24px;
+  display:flex;align-items:center;
+  justify-content:space-between;
+  margin-bottom:28px;
+}
+.plan-info h3{font-size:0.9rem;font-weight:600;margin-bottom:4px;}
+.plan-info p{font-size:0.8rem;color:#52526e;font-weight:300;}
+.upgrade-btn{
+  padding:9px 20px;
+  background:linear-gradient(135deg,#4f6fff,#a78bfa);
+  border:none;border-radius:8px;color:#fff;
+  font-family:'Geist',sans-serif;font-size:0.82rem;
+  font-weight:600;cursor:pointer;transition:all 0.2s;
+  white-space:nowrap;
+}
+.upgrade-btn:hover{opacity:0.9;}
+
+/* SITES GRID */
+.sites-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:16px;
+}
+.site-card{
+  background:#0d0d12;
+  border:1px solid rgba(255,255,255,0.06);
+  border-radius:16px;overflow:hidden;
+  transition:all 0.2s;
+}
+.site-card:hover{border-color:rgba(79,111,255,0.2);transform:translateY(-2px);}
+.site-preview{
+  height:140px;
+  background:linear-gradient(135deg,#12121a,#1a1a24);
+  display:flex;align-items:center;justify-content:center;
+  font-size:2rem;border-bottom:1px solid rgba(255,255,255,0.04);
+  position:relative;overflow:hidden;
+}
+.site-preview::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(79,111,255,0.05),rgba(167,139,250,0.05));
+}
+.site-status{
+  position:absolute;top:10px;right:10px;
+  padding:3px 10px;border-radius:999px;
+  font-size:0.65rem;font-weight:600;
+  letter-spacing:0.5px;text-transform:uppercase;
+}
+.status-live{background:rgba(74,222,128,0.15);color:#4ade80;border:1px solid rgba(74,222,128,0.2);}
+.status-draft{background:rgba(82,82,110,0.2);color:#52526e;border:1px solid rgba(82,82,110,0.2);}
+.site-info{padding:16px;}
+.site-name{font-size:0.92rem;font-weight:600;margin-bottom:4px;}
+.site-url{font-size:0.75rem;color:#52526e;margin-bottom:14px;font-weight:300;}
+.site-actions{display:flex;gap:8px;}
+.site-btn{
+  flex:1;padding:8px;border-radius:8px;
+  font-family:'Geist',sans-serif;font-size:0.75rem;
+  cursor:pointer;transition:all 0.2s;font-weight:500;
+  border:1px solid rgba(255,255,255,0.06);
+  background:transparent;color:#52526e;
+}
+.site-btn:hover{color:#fff;border-color:rgba(255,255,255,0.15);}
+.site-btn.primary{
+  background:#fff;color:#000;border:none;font-weight:600;
+}
+.site-btn.primary:hover{background:rgba(255,255,255,0.9);}
+
+/* NEW SITE CARD */
+.new-site-card{
+  background:#0d0d12;
+  border:1px dashed rgba(255,255,255,0.08);
+  border-radius:16px;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  min-height:220px;cursor:pointer;
+  transition:all 0.2s;gap:12px;
+}
+.new-site-card:hover{border-color:rgba(79,111,255,0.3);background:rgba(79,111,255,0.02);}
+.new-site-icon{
+  width:40px;height:40px;
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:10px;display:flex;
+  align-items:center;justify-content:center;
+  font-size:1.2rem;
+}
+.new-site-text{font-size:0.85rem;color:#52526e;font-weight:500;}
+
+/* EMPTY STATE */
+.empty{
+  grid-column:1/-1;text-align:center;
+  padding:60px 24px;
+}
+.empty-icon{font-size:2.5rem;margin-bottom:16px;}
+.empty-title{font-size:1rem;font-weight:600;margin-bottom:8px;}
+.empty-sub{font-size:0.85rem;color:#52526e;font-weight:300;}
+
+/* MODAL */
+.modal-overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.7);
+  backdrop-filter:blur(8px);
+  z-index:200;display:none;
+  align-items:center;justify-content:center;
+}
+.modal-overlay.show{display:flex;}
+.modal{
+  background:#0d0d12;
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:20px;padding:32px;
+  width:100%;max-width:500px;margin:24px;
+}
+.modal-title{
+  font-family:'Instrument Serif',serif;
+  font-size:1.4rem;margin-bottom:8px;
+}
+.modal-sub{font-size:0.83rem;color:#52526e;margin-bottom:24px;font-weight:300;}
+.type-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;}
+.type-card{
+  padding:16px;border-radius:12px;
+  border:1px solid rgba(255,255,255,0.06);
+  background:#12121a;cursor:pointer;
+  transition:all 0.2s;text-align:center;
+}
+.type-card.active{border-color:rgba(79,111,255,0.4);background:rgba(79,111,255,0.08);}
+.type-card:hover:not(.active){border-color:rgba(255,255,255,0.1);}
+.type-icon{font-size:1.5rem;margin-bottom:8px;}
+.type-label{font-size:0.82rem;font-weight:500;}
+textarea{
+  width:100%;background:#12121a;
+  border:1px solid rgba(255,255,255,0.06);
+  border-radius:12px;color:#fff;
+  font-family:'Geist',sans-serif;
+  font-size:0.88rem;padding:14px;
+  resize:none;min-height:100px;
+  outline:none;transition:border 0.2s;
+  line-height:1.6;font-weight:300;
+  margin-bottom:16px;
+}
+textarea:focus{border-color:rgba(79,111,255,0.4);}
+textarea::placeholder{color:#2a2a3d;}
+.modal-btn{
+  width:100%;padding:14px;
+  background:#fff;color:#000;
+  border:none;border-radius:10px;
+  font-family:'Geist',sans-serif;
+  font-size:0.9rem;font-weight:600;
+  cursor:pointer;transition:all 0.2s;
+}
+.modal-btn:hover:not(:disabled){background:rgba(255,255,255,0.9);}
+.modal-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.modal-close{
+  float:right;background:transparent;border:none;
+  color:#52526e;font-size:1.2rem;cursor:pointer;
+  line-height:1;
+}
+
+@media(max-width:600px){
+  nav{padding:0 16px;}
+  main{padding:24px 16px;}
+  .plan-banner{flex-direction:column;gap:16px;text-align:center;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DevWeb</div>
+  <div class="nav-right">
+    <div class="plan-badge" id="plan-badge">Free</div>
+    <div class="avatar" id="avatar">?</div>
+    <button class="logout-btn" onclick="logout()">Sign out</button>
+  </div>
+</nav>
+
+<main>
+  <div class="page-header">
+    <div class="page-title">My Websites</div>
+    <button class="new-btn" onclick="openModal()">
+      <span>+</span> New website
+    </button>
+  </div>
+
+  <!-- PLAN BANNER -->
+  <div class="plan-banner" id="plan-banner">
+    <div class="plan-info">
+      <h3 id="banner-title">You're on the Free plan</h3>
+      <p id="banner-sub">Build and preview unlimited websites. Subscribe to publish and go live.</p>
+    </div>
+    <button class="upgrade-btn" onclick="window.location.href='index.html#pricing'">
+      Start for $1 →
+    </button>
+  </div>
+
+  <!-- SITES GRID -->
+  <div class="sites-grid" id="sites-grid">
+    <div style="grid-column:1/-1;text-align:center;padding:40px;color:#52526e;">
+      <div style="font-size:2rem;margin-bottom:12px;">⬡</div>
+      <div style="font-size:0.9rem;font-weight:500;margin-bottom:6px;">No websites yet</div>
+      <div style="font-size:0.82rem;font-weight:300;">Click "New website" to build your first one</div>
+    </div>
+  </div>
+</main>
+
+<!-- NEW SITE MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title">Create new website</div>
+    <div class="modal-sub">Describe your vision — AI builds it in seconds</div>
+
+    <div class="type-row">
+      <div class="type-card active" onclick="setType(this,'website')">
+        <div class="type-icon">◻</div>
+        <div class="type-label">Website</div>
+      </div>
+      <div class="type-card" onclick="setType(this,'store')">
+        <div class="type-icon">◈</div>
+        <div class="type-label">Online Store</div>
+      </div>
+    </div>
+
+    <textarea id="modal-prompt" placeholder="A cinematic website for a luxury architecture firm called 'Forma'. Dark minimal aesthetic, 3D elements, portfolio showcase..."></textarea>
+
+    <button class="modal-btn" id="modal-btn" onclick="createSite()">
+      Generate with AI ✦
+    </button>
+  </div>
+</div>
+
+<script>
+const supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+
+let currentUser = null;
+let currentPlan = 'free';
+let selectedType = 'website';
+
+// Auth check
+async function init() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if(!session) { window.location.href = 'login.html'; return; }
+
+  currentUser = session.user;
+
+  // Set avatar
+  const name = currentUser.user_metadata?.name || currentUser.email;
+  document.getElementById('avatar').textContent = name.charAt(0).toUpperCase();
+
+  // Get user plan
+  const { data: userData } = await supabase
+    .from('users').select('*').eq('id', currentUser.id).single();
+
+  if(userData) {
+    currentPlan = userData.plan || 'free';
+    updatePlanUI(currentPlan);
+  }
+
+  // Load sites
+  loadSites();
+}
+
+function updatePlanUI(plan) {
+  const badge = document.getElementById('plan-badge');
+  const bannerTitle = document.getElementById('banner-title');
+  const bannerSub = document.getElementById('banner-sub');
+  const banner = document.getElementById('plan-banner');
+
+  badge.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
+
+  if(plan === 'free') {
+    bannerTitle.textContent = "You're on the Free plan";
+    bannerSub.textContent = "Build and preview unlimited websites. Subscribe to publish and go live.";
+  } else if(plan === 'trial') {
+    bannerTitle.textContent = "Trial — $1 first month";
+    bannerSub.textContent = "Your trial is active. You can publish 1 website.";
+    banner.querySelector('.upgrade-btn').textContent = 'Upgrade to Pro →';
+  } else if(plan === 'pro') {
+    bannerTitle.textContent = "Pro Plan — $20/month";
+    bannerSub.textContent = "You can publish up to 3 websites with custom domains.";
+    banner.querySelector('.upgrade-btn').textContent = 'Upgrade to Business →';
+  } else if(plan === 'business') {
+    banner.style.display = 'none';
+  }
+}
+
+async function loadSites() {
+  const { data: sites } = await supabase
+    .from('sites').select('*')
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false });
+
+  const grid = document.getElementById('sites-grid');
+
+  if(!sites || sites.length === 0) {
+    grid.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:60px;color:#52526e;">
+        <div style="font-size:2rem;margin-bottom:12px;">⬡</div>
+        <div style="font-size:0.9rem;font-weight:500;margin-bottom:6px;color:#fff;">No websites yet</div>
+        <div style="font-size:0.82rem;font-weight:300;">Click "New website" to build your first one</div>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = sites.map(site => `
+    <div class="site-card">
+      <div class="site-preview">
+        <span>${site.type === 'store' ? '◈' : '◻'}</span>
+        <span class="site-status ${site.is_published ? 'status-live' : 'status-draft'}">
+          ${site.is_published ? 'Live' : 'Draft'}
+        </span>
+      </div>
+      <div class="site-info">
+        <div class="site-name">${site.name}</div>
+        <div class="site-url">${site.subdomain ? site.subdomain + '.devweb.app' : 'Not published'}</div>
+        <div class="site-actions">
+          <button class="site-btn primary" onclick="editSite('${site.id}')">Edit</button>
+          <button class="site-btn" onclick="publishSite('${site.id}','${site.is_published}')">
+            ${site.is_published ? 'Unpublish' : 'Publish'}
+          </button>
+          <button class="site-btn" onclick="deleteSite('${site.id}')">Delete</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function setType(el, type) {
+  selectedType = type;
+  document.querySelectorAll('.type-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function openModal() { document.getElementById('modal').classList.add('show'); }
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+
+async function createSite() {
+  const prompt = document.getElementById('modal-prompt').value.trim();
+  if(!prompt) { alert('Please describe your website'); return; }
+
+  const btn = document.getElementById('modal-btn');
+  btn.disabled = true;
+  btn.textContent = 'AI is building... ✦';
+
+  try {
+    // Generate with Gemini
+    const html = await generateWithGemini(prompt, selectedType);
+
+    // Extract site name from HTML
+    const nameMatch = html.match(/<title>(.*?)<\/title>/i);
+    const siteName = nameMatch ? nameMatch[1] : 'My Website';
+    const subdomain = siteName.toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 30) + '-' + Date.now().toString().slice(-4);
+
+    // Save to Supabase
+    const { data, error } = await supabase.from('sites').insert({
+      user_id: currentUser.id,
+      name: siteName,
+      type: selectedType,
+      prompt: prompt,
+      html_content: html,
+      subdomain: subdomain,
+      is_published: false,
+      is_active: true
+    }).select().single();
+
+    if(error) throw error;
+
+    closeModal();
+    loadSites();
+
+    // Open editor
+    localStorage.setItem('devweb_site_id', data.id);
+    localStorage.setItem('devweb_site_html', html);
+    window.location.href = 'app.html';
+
+  } catch(e) {
+    alert('Something went wrong. Try again.');
+    console.error(e);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Generate with AI ✦';
+}
+
+async function generateWithGemini(prompt, type) {
+  const isStore = type === 'store';
+  const systemPrompt = `You are an elite creative web developer. Generate a COMPLETE single-file HTML website.
+REQUIREMENTS: Import Three.js (https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js), GSAP (https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js), Google Fonts. Add 3D animated background, GSAP animations, custom cursor, responsive design. ${isStore ? 'Include product grid with prices, cart counter, Add to Cart buttons.' : 'Include hero, about, portfolio/features, contact sections.'} Make it look like it cost $10,000. Output ONLY raw HTML starting with <!DOCTYPE html>.`;
+
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: `${systemPrompt}\n\nBuild: ${prompt}` }] }],
+      generationConfig: { maxOutputTokens: 8192, temperature: 0.9 }
+    })
+  });
+
+  const data = await res.json();
+  let html = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  html = html.replace(/```html\n?/gi, '').replace(/```\n?/g, '').trim();
+  return html;
+}
+
+async function publishSite(id, isPublished) {
+  if(currentPlan === 'free') {
+    if(confirm('Publishing requires a paid plan. Start for just $1?')) {
+      window.location.href = 'index.html#pricing';
+    }
+    return;
+  }
+
+  const newStatus = isPublished === 'true' ? false : true;
+  await supabase.from('sites').update({ is_published: newStatus }).eq('id', id);
+  loadSites();
+}
+
+async function editSite(id) {
+  const { data } = await supabase.from('sites').select('*').eq('id', id).single();
+  if(data) {
+    localStorage.setItem('devweb_site_id', data.id);
+    localStorage.setItem('devweb_site_html', data.html_content);
+    window.location.href = 'app.html';
+  }
+}
+
+async function deleteSite(id) {
+  if(!confirm('Delete this website? This cannot be undone.')) return;
+  await supabase.from('sites').delete().eq('id', id);
+  loadSites();
+}
+
+async function logout() {
+  await supabase.auth.signOut();
+  window.location.href = 'login.html';
+}
+
+init();
+</script>
+</body>
+</html>
