@@ -114,8 +114,8 @@ input::placeholder{color:#2a2a3d;}
   <div class="subtitle">Build websites with AI</div>
 
   <div class="tabs">
-    <button class="tab active" onclick="switchTab.call({target:this},'login')">Sign in</button>
-    <button class="tab" onclick="switchTab.call({target:this},'signup')">Sign up</button>
+    <button class="tab active"onclick="this.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');document.getElementById('login-form').style.display='block';document.getElementById('signup-form').style.display='none'">Sign in</button>
+    <button class="tab" onclick="this.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');document.getElementById('login-form').style.display='none';document.getElementById('signup-form').style.display='block'">Sign up</button>
   </div>
 
   <!-- LOGIN -->
