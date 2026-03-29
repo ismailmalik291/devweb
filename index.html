@@ -1007,23 +1007,26 @@ Match the aesthetic EXACTLY to the user's description.
 Be bold. Be dramatic. Be unforgettable.
 
 Output ONLY raw HTML starting with <!DOCTYPE html>. Zero explanation. Zero markdown.`;
-
-  try{
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,{
+try{
+    const res=await fetch(CONFIG.GROQ_URL,{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':`Bearer ${CONFIG.GROQ_API_KEY}`
+      },
       body:JSON.stringify({
-        contents:[{parts:[{text:`${sys}\n\nBuild this ${currentType}: ${p}`}]}],
-        generationConfig:{maxOutputTokens:8192,temperature:0.9}
+        model:CONFIG.GROQ_MODEL,
+        messages:[{role:'user',content:`${sys}\n\nBuild this ${currentType}: ${p}`}],
+        max_tokens:8192,
+        temperature:0.9
       })
     });
-
     const data=await res.json();
     if(data.error)throw new Error(data.error.message);
-
-    let html=data.candidates?.[0]?.content?.parts?.[0]?.text||'';
+    let html=data.choices?.[0]?.message?.content||'';
     html=html.replace(/```html\n?/gi,'').replace(/```\n?/g,'').trim();
     generatedHTML=html;
+  
     const nameMatch=html.match(/<title>(.*?)<\/title>/i);
     const name=nameMatch?nameMatch[1].toLowerCase().replace(/\s+/g,'-'):'my-site';
     document.getElementById('urlbar').textContent=`${name}.devweb.app`;
